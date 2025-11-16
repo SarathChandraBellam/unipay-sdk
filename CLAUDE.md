@@ -1,466 +1,282 @@
-# CLAUDE.md - UniPay SDK
+# CLAUDE.md
 
-## Repository Overview
-
-This is the **UniPay SDK** repository - a software development kit for integrating with UniPay payment processing services.
-
-**Current Status**: New repository - initial setup phase
-**Repository**: unipay-sdk
-**Last Updated**: 2025-11-16
-
-## Project Purpose
-
-The UniPay SDK is designed to provide developers with a simple, type-safe interface for integrating UniPay payment services into their applications. This SDK should support multiple programming languages and provide comprehensive documentation, examples, and testing utilities.
+> Implementation brief for Codex: build **unipay-sdk**, a pure, modular, high-performance TypeScript payments SDK that unifies Stripe, Razorpay and PayPal.
+> No HTTP server code. No routing. Pure SDK modules only — importable into any app.
 
 ---
 
-## Codebase Structure
+## 1 — Goal (short)
 
-### Recommended Organization
+Create a **pure SDK** (TypeScript, Node 18+) that provides a provider-agnostic API for payment operations. Modular adapters (stripe, razorpay, paypal) translate provider APIs into a single normalized shape. Everything must be async, non-blocking, low-latency, and easy to extend.
 
-As this repository is in its initial phase, here's the recommended structure for development:
+---
+
+## 2 — Tech requirements
+
+* Runtime: **Node 18+**
+* Language: **TypeScript** (strict mode)
+* Package manager: **npm workspaces**
+* No HTTP servers, no route handlers, no Fastify/Express
+* All code async / non-blocking
+* Use **undici** for outbound HTTP requests where applicable
+* Produce **ESM + CJS** builds
+* Lint: **ESLint** (TypeScript rules)
+* Format: **Prettier**
+* Tests: **Jest** or **Vitest**
+* Bundle/build: **tsup** or **esbuild** (fast)
+* Provide `.d.ts` type declarations
+
+---
+
+## 3 — Repo structure
 
 ```
-unipay-sdk/
-├── src/                    # Source code
-│   ├── client/            # Main SDK client implementation
-│   ├── models/            # Data models and types
-│   ├── services/          # Service-specific implementations
-│   ├── utils/             # Utility functions
-│   └── index.ts           # Main entry point
-├── tests/                 # Test files
-│   ├── unit/             # Unit tests
-│   ├── integration/      # Integration tests
-│   └── fixtures/         # Test data and fixtures
-├── examples/             # Usage examples
-├── docs/                 # Documentation
-├── scripts/              # Build and utility scripts
-├── package.json          # Dependencies and scripts
-├── tsconfig.json         # TypeScript configuration
-├── .eslintrc.js          # Linting rules
-├── .prettierrc           # Code formatting
-└── README.md             # User-facing documentation
+/payments-sdk
+  /packages
+    /core             # unified API, types, base classes, adapter registry
+    /adapter-stripe   # stripe implementation
+    /adapter-razorpay
+    /adapter-paypal
+    /utils            # shared utilities: idempotency, retry, signature-verify
+    /client           # browser-safe helpers only
+  package.json        # npm workspaces
+  README.md
+  CLAUDE.md           # this file
 ```
 
-### Key Directories
-
-- **src/**: All production source code
-- **tests/**: Comprehensive test coverage (aim for >80%)
-- **examples/**: Working code examples for common use cases
-- **docs/**: API documentation, guides, and tutorials
-
 ---
 
-## Technology Stack
+## 4 — Core requirements (`packages/core`)
 
-### Expected Technologies
+### 4.1 Types & interface (must exist exactly / strongly typed)
 
-Based on SDK best practices, this project should likely use:
+Implement and export the following in `core/src/types.ts`:
 
-- **Language**: TypeScript (for type safety and better DX)
-- **Build Tool**: tsup, rollup, or esbuild
-- **Testing**: Jest or Vitest
-- **Linting**: ESLint with TypeScript support
-- **Formatting**: Prettier
-- **Package Manager**: npm, yarn, or pnpm
-- **Documentation**: TypeDoc or similar
+```ts
+export interface CreatePaymentInput {
+  amount: number;              // smallest unit
+  currency: string;
+  description?: string;
+  metadata?: Record<string,string>;
+  customerId?: string;
+  capture?: boolean;
+  paymentMethodTypes?: string[];
+  returnUrl?: string;
+  appId?: string;
+}
 
-### Dependencies Philosophy
+export type PaymentStatus =
+  | 'created'
+  | 'requires_action'
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'captured'
+  | 'refunded';
 
-- Keep dependencies minimal to reduce bundle size
-- Prefer well-maintained, widely-used packages
-- Pin major versions to prevent breaking changes
-- Use peer dependencies for common libraries
+export interface Payment {
+  id: string;                  // sdk id: <provider>_<nativeId>
+  provider: string;
+  providerPaymentId?: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  createdAt: string;
+  metadata?: Record<string,string>;
+  clientPayload?: any;         // secretsafe: client_secret, orderId, redirectUrl
+}
 
----
-
-## Development Workflows
-
-### Setting Up the Project
-
-When initializing this repository, follow these steps:
-
-1. **Initialize package.json**
-   ```bash
-   npm init -y
-   ```
-
-2. **Install TypeScript and build tools**
-   ```bash
-   npm install -D typescript tsup
-   ```
-
-3. **Set up testing framework**
-   ```bash
-   npm install -D vitest @vitest/ui
-   ```
-
-4. **Configure linting and formatting**
-   ```bash
-   npm install -D eslint prettier eslint-config-prettier
-   ```
-
-5. **Create initial directory structure**
-   ```bash
-   mkdir -p src/{client,models,services,utils} tests/{unit,integration} examples docs
-   ```
-
-### Git Workflow
-
-- **Main Branch**: `main` or `master` - always production-ready
-- **Feature Branches**: `feature/description` - for new features
-- **Bug Fixes**: `fix/description` - for bug fixes
-- **Claude Branches**: `claude/claude-md-*` - for AI-assisted development
-
-### Branch Protection
-
-- All changes should go through pull requests
-- Require passing tests before merging
-- Require code review for significant changes
-- Use semantic versioning for releases
-
----
-
-## Coding Conventions
-
-### TypeScript Standards
-
-1. **Strict Mode**: Enable strict TypeScript compiler options
-   ```json
-   {
-     "compilerOptions": {
-       "strict": true,
-       "noImplicitAny": true,
-       "strictNullChecks": true
-     }
-   }
-   ```
-
-2. **Naming Conventions**:
-   - Classes: PascalCase (`PaymentClient`)
-   - Interfaces: PascalCase with 'I' prefix optional (`IPaymentOptions` or `PaymentOptions`)
-   - Functions: camelCase (`createPayment`)
-   - Constants: UPPER_SNAKE_CASE (`API_BASE_URL`)
-   - Files: kebab-case (`payment-client.ts`)
-
-3. **Code Organization**:
-   - One class/interface per file
-   - Group related functionality together
-   - Use barrel exports (index.ts) for cleaner imports
-
-### Documentation Standards
-
-1. **JSDoc Comments**: All public APIs must have JSDoc comments
-   ```typescript
-   /**
-    * Creates a new payment transaction
-    * @param options - Payment configuration options
-    * @returns Promise resolving to payment result
-    * @throws {PaymentError} When payment validation fails
-    */
-   export async function createPayment(options: PaymentOptions): Promise<PaymentResult> {
-     // implementation
-   }
-   ```
-
-2. **README**: Keep README.md up to date with:
-   - Installation instructions
-   - Quick start guide
-   - Basic usage examples
-   - Link to full documentation
-
-3. **CHANGELOG**: Maintain a CHANGELOG.md following Keep a Changelog format
-
-### Error Handling
-
-1. **Custom Error Classes**: Create specific error types
-   ```typescript
-   export class PaymentError extends Error {
-     constructor(
-       message: string,
-       public code: string,
-       public statusCode?: number
-     ) {
-       super(message);
-       this.name = 'PaymentError';
-     }
-   }
-   ```
-
-2. **Error Propagation**: Let errors bubble up, handle at appropriate level
-3. **User-Friendly Messages**: Provide clear, actionable error messages
-
-### Testing Standards
-
-1. **Coverage**: Aim for >80% code coverage
-2. **Test Structure**: Follow AAA pattern (Arrange, Act, Assert)
-3. **Test Naming**: Descriptive names: `should return error when amount is negative`
-4. **Mock External Dependencies**: Use mocks/stubs for API calls
-5. **Integration Tests**: Test real-world scenarios end-to-end
-
----
-
-## AI Assistant Guidelines
-
-### When Working on This Codebase
-
-1. **Always Check Existing Code First**
-   - Read relevant files before making changes
-   - Understand the existing patterns and follow them
-   - Don't introduce inconsistent coding styles
-
-2. **Type Safety is Critical**
-   - Never use `any` type unless absolutely necessary
-   - Provide proper type definitions for all functions
-   - Use generics where appropriate for reusability
-
-3. **Write Tests Alongside Code**
-   - Create unit tests for new functions
-   - Update tests when modifying existing code
-   - Ensure all tests pass before committing
-
-4. **Documentation is Required**
-   - Add JSDoc comments to all public APIs
-   - Update README.md if adding new features
-   - Include code examples for complex functionality
-
-5. **Security Considerations**
-   - Never commit API keys, secrets, or credentials
-   - Validate all inputs, especially payment amounts
-   - Use secure methods for handling sensitive data
-   - Implement rate limiting for API calls
-
-6. **Performance**
-   - Keep bundle size minimal
-   - Use lazy loading where appropriate
-   - Avoid unnecessary dependencies
-   - Optimize for common use cases
-
-7. **Commit Messages**
-   - Use conventional commits format:
-     - `feat: add payment verification endpoint`
-     - `fix: correct amount validation logic`
-     - `docs: update API documentation`
-     - `test: add unit tests for refund service`
-     - `refactor: simplify error handling`
-
-8. **Before Pushing Code**
-   - Run linter: `npm run lint`
-   - Run tests: `npm test`
-   - Build project: `npm run build`
-   - Check for TypeScript errors: `npm run type-check`
-
-### Common Tasks
-
-#### Adding a New Feature
-
-1. Create feature branch: `git checkout -b feature/feature-name`
-2. Implement feature in `src/`
-3. Add types/interfaces in `src/models/`
-4. Write unit tests in `tests/unit/`
-5. Add integration test in `tests/integration/`
-6. Update documentation
-7. Run all checks (lint, test, build)
-8. Commit and push
-
-#### Fixing a Bug
-
-1. Create fix branch: `git checkout -b fix/bug-description`
-2. Write failing test that reproduces the bug
-3. Fix the bug
-4. Ensure test passes
-5. Check for regressions
-6. Commit with descriptive message
-7. Push changes
-
-#### Updating Dependencies
-
-1. Check for breaking changes in changelogs
-2. Update package.json
-3. Run `npm install`
-4. Run full test suite
-5. Update code if needed for breaking changes
-6. Test examples to ensure they still work
-
----
-
-## API Design Principles
-
-### SDK Interface Design
-
-1. **Simplicity First**: Make common tasks simple, complex tasks possible
-2. **Consistent API**: Use consistent naming and patterns throughout
-3. **Chainable Methods**: Support method chaining where it makes sense
-4. **Sensible Defaults**: Provide good defaults, allow overrides
-5. **Progressive Disclosure**: Simple interface with advanced options available
-
-### Example SDK Client Structure
-
-```typescript
-// Recommended client structure
-export class UniPayClient {
-  constructor(config: UniPayConfig) {
-    // Initialize with API key, environment, etc.
-  }
-
-  // Payment operations
-  payments: {
-    create(options: CreatePaymentOptions): Promise<Payment>;
-    get(id: string): Promise<Payment>;
-    list(filters?: PaymentFilters): Promise<Payment[]>;
-    cancel(id: string): Promise<Payment>;
-  };
-
-  // Customer operations
-  customers: {
-    create(data: CustomerData): Promise<Customer>;
-    get(id: string): Promise<Customer>;
-    update(id: string, data: Partial<CustomerData>): Promise<Customer>;
-  };
-
-  // Webhook handling
-  webhooks: {
-    verify(payload: string, signature: string): boolean;
-    parse(payload: string): WebhookEvent;
-  };
+export interface PaymentProvider {
+  createPayment(input: CreatePaymentInput): Promise<Payment>;
+  confirmPayment(paymentId: string, clientData?: any): Promise<Payment>;
+  capturePayment(paymentId: string, amount?: number): Promise<Payment>;
+  refundPayment(paymentId: string, amount?: number): Promise<{ refundId: string, status: string }>;
+  getPayment(paymentId: string): Promise<Payment>;
+  verifyWebhook?(headers: Record<string,string>, rawBody: string): Promise<{ valid: boolean; event?: any }>;
 }
 ```
 
-### Configuration
+### 4.2 Adapter registry & client
 
-```typescript
-interface UniPayConfig {
-  apiKey: string;
-  environment?: 'sandbox' | 'production';
-  timeout?: number;
-  retryPolicy?: RetryPolicy;
-  logger?: Logger;
-}
+* `registerAdapter(name: string, adapterFactory: (...args) => PaymentProvider)` — allow late registration.
+* `getAdapter(name: string): PaymentProvider | undefined`.
+* `PaymentClient` class:
+
+  * Construct with `{ provider: string, config: any }`.
+  * Resolve adapter lazily on first call.
+  * Wrap adapter calls with configurable retry, timeout, idempotency helpers.
+  * Provide per-call overrides: e.g. `client.createPayment(input, { provider?, timeout?, idempotencyKey? })`.
+  * Expose typed errors and events where appropriate.
+
+### 4.3 Performance rules (core-level guarantees)
+
+* All SDK calls must be non-blocking and Promise-based.
+* Use **undici** for HTTP calls (paypal, razorpay if SDKless).
+* Reuse and cache HTTP agent(s) — no new agent per call.
+* Support AbortController per-request.
+* Provide exponential-backoff retry helper (with jitter).
+* Map provider errors to typed SDK errors (no blocking transforms).
+
+---
+
+## 5 — Adapter implementation requirements
+
+Adapters live under `/packages/adapter-<provider>` and implement `PaymentProvider`.
+
+### 5.1 `adapter-stripe`
+
+* Use official `stripe` Node SDK.
+* Implement: `createPayment`, `confirmPayment`, `capturePayment`, `refundPayment`, `getPayment`.
+* Use idempotency keys for create operations when supported.
+* Normalize `PaymentIntent` (and associated `Charge`) to `Payment`.
+* Implement webhook verification using `stripe.webhooks.constructEvent` (exposed as `verifyWebhook`).
+* Adapter must be pure functions/classes — no server code.
+
+### 5.2 `adapter-razorpay`
+
+* Prefer official Razorpay SDK; if too slow, use undici raw calls.
+* Implement: create order, capture payment, refund, get payment.
+* Implement webhook signature verification (SHA256 HMAC).
+* Normalize Razorpay objects → `Payment`.
+
+### 5.3 `adapter-paypal`
+
+* Use raw REST API via **undici**.
+* Implement: create payment (v2 payment/capture flow), capture, refund, get.
+* Implement PayPal webhook signature verification logic per PayPal docs (certificate-based).
+* Normalize PayPal objects → `Payment`.
+
+---
+
+## 6 — Utilities (`packages/utils`)
+
+Implement small, well-tested helpers used by core and adapters.
+
+### 6.1 Retry helper
+
+* Exponential backoff + full jitter.
+* Async-friendly.
+* Configurable: `maxRetries`, `baseDelayMs`, `maxDelayMs`, `timeoutMs`.
+* Accepts optional AbortSignal.
+
+### 6.2 Idempotency helper
+
+* Generate UUID-based idempotency keys.
+* Provide helper to attach provider-specific idempotency headers.
+
+### 6.3 Signature verification helpers
+
+* Stripe: wrapper that accepts `stripeWebhookSecret`, `headers`, `rawBody` and calls stripe verification.
+* Razorpay: SHA256 HMAC verification helper.
+* PayPal: verify using PayPal's verification approach (use undici to call /webhooks/verify-signature when necessary, or implement local certificate verification if feasible).
+
+### 6.4 Status mappers
+
+* `mapStripeStatus(piStatus: string | unknown): PaymentStatus`
+* `mapRazorpayStatus(x: any): PaymentStatus`
+* `mapPayPalStatus(x: any): PaymentStatus`
+
+---
+
+## 7 — Client package (`packages/client`)
+
+* Minimal browser helpers only (no secrets, no server code).
+* Support:
+
+  * Stripe.js flow helper: feed it `clientPayload.clientSecret` and return client completion helper.
+  * Razorpay Checkout helper: accept `clientPayload.orderId` and open checkout.
+* Build tiny bundle via esbuild/tsup. Expose ESM for browser imports.
+
+---
+
+## 8 — Testing
+
+* Unit tests for `core`, `utils`, and each adapter.
+* Mock provider SDKs / endpoints in unit tests.
+* Contract tests verifying that each adapter returns normalized `Payment` objects for a set of canonical responses.
+* Optional integration tests run only when env vars present; document env vars and mark integrations optional in CI.
+* Include test that simulates tampered webhook signatures and asserts verification failure.
+
+---
+
+## 9 — Build & publish
+
+* Use npm workspaces to manage packages.
+* Provide `build` scripts using **tsup** or **esbuild** for each package.
+* Output: ESM, CJS, `.d.ts`.
+* Add `prepare` script so `npm publish` works after build.
+* Provide `package.json` fields for each package (name, version, main/module, types, files).
+
+---
+
+## 10 — README and docs (generate)
+
+Write a clear README at repo root describing:
+
+* Project overview
+* Installation steps for workspace and packages
+* Quickstart example (core + stripe)
+* How to register adapters and instantiate `PaymentClient`
+* How to add a new adapter (brief template)
+* How to run tests and optional integration tests
+* How to build and publish packages
+
+**Example snippet** (must appear in README/docs)
+
+```ts
+import { PaymentClient } from '@unipay/core';
+import '@unipay/adapter-stripe/register'; // adapter auto-registers itself
+
+const client = new PaymentClient({
+  provider: 'stripe',
+  config: { secretKey: process.env.STRIPE_SECRET }
+});
+
+const payment = await client.createPayment({
+  amount: 1000,
+  currency: 'USD'
+});
 ```
 
 ---
 
-## Testing Strategy
+## 11 — Acceptance criteria
 
-### Test Categories
+The implementation must satisfy these checks:
 
-1. **Unit Tests**: Test individual functions/classes in isolation
-2. **Integration Tests**: Test interaction between components
-3. **E2E Tests**: Test complete user workflows
-4. **Contract Tests**: Ensure API contract compatibility
-
-### Mock Data
-
-- Store mock data in `tests/fixtures/`
-- Create realistic test data that matches production scenarios
-- Use factories/builders for generating test data
-
-### Testing Checklist
-
-- [ ] Happy path scenarios
-- [ ] Error conditions and edge cases
-- [ ] Input validation
-- [ ] Timeout and retry logic
-- [ ] Authentication and authorization
-- [ ] Rate limiting
-- [ ] Webhook signature verification
+* `npm run build` completes without TypeScript errors.
+* `npm test` passes unit tests.
+* `packages/core` exports: `PaymentClient`, `registerAdapter`, `PaymentProvider`, `types`.
+* Adapters auto-register (when their package is imported).
+* All adapter methods are Promise-based and non-blocking.
+* No server or routing code anywhere in repo.
+* Outbound HTTP uses undici and reuses agents.
+* Retry + idempotency helpers exist and are used where supported.
+* Structure allows adding new providers in <150 LOC (adapter template).
+* README and `.env.example` (for integration tests) exist.
 
 ---
 
-## Security Best Practices
+## 12 — Extra notes for implementer
 
-1. **API Key Management**
-   - Never hardcode API keys
-   - Use environment variables
-   - Provide clear documentation on key management
-
-2. **Input Validation**
-   - Validate all inputs on the client side
-   - Sanitize data before sending to API
-   - Use schema validation (e.g., Zod, Yup)
-
-3. **HTTPS Only**
-   - Always use HTTPS for API calls
-   - Reject insecure connections in production
-
-4. **Rate Limiting**
-   - Implement client-side rate limiting
-   - Handle 429 responses gracefully
-   - Provide backoff strategies
-
-5. **Sensitive Data**
-   - Never log sensitive information
-   - Mask credit card numbers, API keys in logs
-   - Use PCI-compliant practices for payment data
+* Keep adapter surface minimal and focused; do not re-expose full provider SDK surface — only map commonly used operations.
+* Prefer small, dependency-light code; avoid heavy libs beyond provider SDKs where necessary.
+* Use AbortController to bound network calls.
+* Document any provider-specific caveats inside adapter README sections.
+* Be explicit about what clientPayload contains and what is safe to transmit to browser.
 
 ---
 
-## Release Process
+## 13 — Deliverables (explicit)
 
-### Versioning
-
-Follow Semantic Versioning (semver):
-- **MAJOR**: Breaking changes
-- **MINOR**: New features, backwards compatible
-- **PATCH**: Bug fixes, backwards compatible
-
-### Release Checklist
-
-1. [ ] All tests passing
-2. [ ] Documentation updated
-3. [ ] CHANGELOG.md updated
-4. [ ] Version bumped in package.json
-5. [ ] Git tag created
-6. [ ] npm package published
-7. [ ] Release notes created
-8. [ ] Examples tested with new version
+* Complete repo tree as described
+* Working TypeScript source for core and adapters
+* Utils and client helpers
+* Unit tests + optional integration tests
+* build/test/lint scripts and GitHub Actions CI suggested config (CI optional)
+* README, CLAUDE.md (this file), and sample `.env.example`
+* Adapter template for adding new providers
 
 ---
 
-## Resources
-
-### Documentation Links
-
-- **TypeScript**: https://www.typescriptlang.org/docs/
-- **Testing Best Practices**: https://testingjavascript.com/
-- **Semantic Versioning**: https://semver.org/
-- **Conventional Commits**: https://www.conventionalcommits.org/
-
-### Internal Documentation
-
-As the project grows, maintain these documents:
-- API Reference (generated from JSDoc)
-- Integration Guides
-- Migration Guides (for breaking changes)
-- Troubleshooting Guide
-- FAQ
-
----
-
-## Questions or Issues?
-
-When encountering issues or needing clarification:
-
-1. Check existing documentation in `/docs`
-2. Review similar implementations in the codebase
-3. Check test files for usage examples
-4. Consult with repository maintainers
-5. Document decisions in code comments
-
----
-
-## Future Considerations
-
-As the SDK matures, consider adding:
-
-- [ ] Multiple language support (Python, Java, Go, etc.)
-- [ ] CLI tool for testing
-- [ ] Postman/OpenAPI collection
-- [ ] Interactive documentation
-- [ ] Code generation from OpenAPI spec
-- [ ] Telemetry and analytics
-- [ ] Performance benchmarks
-
----
-
-**Note**: This document should be updated as the codebase evolves. Keep it synchronized with actual implementation details and architectural decisions.
+End of CLAUDE.md — implement exactly as specified above.
