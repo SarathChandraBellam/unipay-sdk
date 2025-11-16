@@ -7,7 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build:core && npm run build:adapters",
+    "build:core": "npm run build -w @unipay/core -w @unipay/utils -w @unipay/client",
+    "build:adapters": "npm run build -w @unipay/adapter-stripe -w @unipay/adapter-razorpay -w @unipay/adapter-paypal",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
