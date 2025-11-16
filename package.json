@@ -1,0 +1,62 @@
+{
+  "name": "unipay-sdk-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A pure, modular, high-performance TypeScript payments SDK that unifies Stripe, Razorpay and PayPal",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.3",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/coverage-v8": "^1.0.4",
+    "@vitest/ui": "^1.0.4",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SarathChandraBellam/unipay-sdk.git"
+  },
+  "keywords": [
+    "payments",
+    "sdk",
+    "stripe",
+    "razorpay",
+    "paypal",
+    "typescript",
+    "unified-api",
+    "payment-gateway"
+  ],
+  "author": "Sarath Chandra Bellam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SarathChandraBellam/unipay-sdk/issues"
+  },
+  "homepage": "https://github.com/SarathChandraBellam/unipay-sdk#readme"
+}
