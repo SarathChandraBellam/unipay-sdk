@@ -41,9 +41,7 @@ export class PayPalAdapter implements PaymentProvider {
     this.clientSecret = config.clientSecret;
     this.webhookId = config.webhookId;
     this.baseUrl =
-      config.mode === 'live'
-        ? 'https://api-m.paypal.com'
-        : 'https://api-m.sandbox.paypal.com';
+      config.mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 
     // Reuse HTTP agent for connection pooling
     this.agent = new Agent({
@@ -66,7 +64,7 @@ export class PayPalAdapter implements PaymentProvider {
     const response = await request(`${this.baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${auth}`,
+        Authorization: `Basic ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
@@ -81,23 +79,23 @@ export class PayPalAdapter implements PaymentProvider {
     this.accessToken = data.access_token;
     this.tokenExpiry = Date.now() + (data.expires_in - 60) * 1000; // Refresh 1 min early
 
+    if (!this.accessToken) {
+      throw new Error('Failed to get access token from PayPal');
+    }
+
     return this.accessToken;
   }
 
   /**
    * Make authenticated API request
    */
-  private async apiRequest(
-    path: string,
-    method: string,
-    body?: any
-  ): Promise<any> {
+  private async apiRequest(path: string, method: string, body?: any): Promise<any> {
     const token = await this.getAccessToken();
 
     const response = await request(`${this.baseUrl}${path}`, {
-      method,
+      method: method as any,
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -107,9 +105,7 @@ export class PayPalAdapter implements PaymentProvider {
     const responseData: any = await response.body.json();
 
     if (response.statusCode >= 400) {
-      throw new Error(
-        responseData.message || `PayPal API error: ${response.statusCode}`
-      );
+      throw new Error(responseData.message || `PayPal API error: ${response.statusCode}`);
     }
 
     return responseData;
@@ -196,10 +192,7 @@ export class PayPalAdapter implements PaymentProvider {
   async capturePayment(paymentId: string): Promise<Payment> {
     try {
       const id = this.extractPaymentId(paymentId);
-      const result = await this.apiRequest(
-        `/v2/checkout/orders/${id}/capture`,
-        'POST'
-      );
+      const result = await this.apiRequest(`/v2/checkout/orders/${id}/capture`, 'POST');
 
       return this.normalizePayment(result);
     } catch (error) {
@@ -221,8 +214,7 @@ export class PayPalAdapter implements PaymentProvider {
 
       // Get order to find capture ID
       const order = await this.apiRequest(`/v2/checkout/orders/${id}`, 'GET');
-      const captureId =
-        order.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+      const captureId = order.purchase_units?.[0]?.payments?.captures?.[0]?.id;
 
       if (!captureId) {
         throw new Error('No capture found for this order');
@@ -305,19 +297,15 @@ export class PayPalAdapter implements PaymentProvider {
       const event = JSON.parse(rawBody);
 
       // Call PayPal's verification endpoint
-      const result = await this.apiRequest(
-        '/v1/notifications/verify-webhook-signature',
-        'POST',
-        {
-          transmission_id: transmissionId,
-          transmission_time: transmissionTime,
-          cert_url: certUrl,
-          auth_algo: authAlgo,
-          transmission_sig: transmissionSig,
-          webhook_id: this.webhookId,
-          webhook_event: event,
-        }
-      );
+      const result = await this.apiRequest('/v1/notifications/verify-webhook-signature', 'POST', {
+        transmission_id: transmissionId,
+        transmission_time: transmissionTime,
+        cert_url: certUrl,
+        auth_algo: authAlgo,
+        transmission_sig: transmissionSig,
+        webhook_id: this.webhookId,
+        webhook_event: event,
+      });
 
       const valid = result.verification_status === 'SUCCESS';
       return {

@@ -112,7 +112,7 @@ export class RazorpayAdapter implements PaymentProvider {
   /**
    * Confirm a payment (fetch payment details)
    */
-  async confirmPayment(paymentId: string, clientData?: any): Promise<Payment> {
+  async confirmPayment(paymentId: string, _clientData?: any): Promise<Payment> {
     try {
       const id = this.extractPaymentId(paymentId);
       const payment = await this.razorpay.payments.fetch(id);
@@ -138,7 +138,11 @@ export class RazorpayAdapter implements PaymentProvider {
       const currentPayment = await this.razorpay.payments.fetch(id);
       const captureAmount = amount || currentPayment.amount;
 
-      const payment = await this.razorpay.payments.capture(id, captureAmount, currentPayment.currency);
+      const payment = await this.razorpay.payments.capture(
+        id,
+        captureAmount,
+        currentPayment.currency
+      );
       return this.normalizePayment(payment, 'payment');
     } catch (error) {
       throw new PaymentOperationError(
@@ -156,15 +160,9 @@ export class RazorpayAdapter implements PaymentProvider {
   async refundPayment(paymentId: string, amount?: number): Promise<RefundResult> {
     try {
       const id = this.extractPaymentId(paymentId);
-      const refundData: any = {
-        payment_id: id,
-      };
+      const refundData: any = amount !== undefined ? { amount } : {};
 
-      if (amount !== undefined) {
-        refundData.amount = amount;
-      }
-
-      const refund = await this.razorpay.refunds.create(refundData);
+      const refund = await this.razorpay.payments.refund(id, refundData);
 
       return {
         refundId: refund.id,
@@ -220,8 +218,7 @@ export class RazorpayAdapter implements PaymentProvider {
     }
 
     try {
-      const signature =
-        headers['x-razorpay-signature'] || headers['X-Razorpay-Signature'];
+      const signature = headers['x-razorpay-signature'] || headers['X-Razorpay-Signature'];
 
       if (!signature) {
         return { valid: false };

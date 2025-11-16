@@ -45,8 +45,8 @@ const client = new PaymentClient({
   provider: 'stripe',
   config: {
     secretKey: process.env.STRIPE_SECRET_KEY,
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
-  }
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  },
 });
 
 // Create a payment
@@ -54,7 +54,7 @@ const payment = await client.createPayment({
   amount: 1000, // Amount in cents
   currency: 'USD',
   description: 'Test payment',
-  metadata: { orderId: '12345' }
+  metadata: { orderId: '12345' },
 });
 
 console.log(payment.id); // stripe_pi_xxx
@@ -73,7 +73,7 @@ import '@unipay/adapter-paypal/register';
 // Stripe client
 const stripeClient = new PaymentClient({
   provider: 'stripe',
-  config: { secretKey: process.env.STRIPE_SECRET_KEY }
+  config: { secretKey: process.env.STRIPE_SECRET_KEY },
 });
 
 // Razorpay client
@@ -81,8 +81,8 @@ const razorpayClient = new PaymentClient({
   provider: 'razorpay',
   config: {
     keyId: process.env.RAZORPAY_KEY_ID,
-    keySecret: process.env.RAZORPAY_KEY_SECRET
-  }
+    keySecret: process.env.RAZORPAY_KEY_SECRET,
+  },
 });
 
 // PayPal client
@@ -91,8 +91,8 @@ const paypalClient = new PaymentClient({
   config: {
     clientId: process.env.PAYPAL_CLIENT_ID,
     clientSecret: process.env.PAYPAL_CLIENT_SECRET,
-    mode: 'sandbox' // or 'live'
-  }
+    mode: 'sandbox', // or 'live'
+  },
 });
 ```
 
@@ -126,8 +126,8 @@ const client = new PaymentClient({
   provider: 'stripe',
   config: {
     secretKey: process.env.STRIPE_SECRET_KEY,
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
-  }
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  },
 });
 
 // In your webhook handler
@@ -135,10 +135,7 @@ app.post('/webhook', async (req, res) => {
   const signature = req.headers['stripe-signature'];
   const rawBody = req.body; // Must be raw body string
 
-  const result = await client.verifyWebhook(
-    { 'stripe-signature': signature },
-    rawBody
-  );
+  const result = await client.verifyWebhook({ 'stripe-signature': signature }, rawBody);
 
   if (result.valid) {
     console.log('Webhook event:', result.event);
@@ -168,7 +165,7 @@ const elements = stripe.elements();
 // Use SDK helper
 const helper = initializeStripePayment({
   clientSecret: payment.clientPayload.clientSecret,
-  returnUrl: window.location.href
+  returnUrl: window.location.href,
 });
 
 // Confirm payment
@@ -210,14 +207,14 @@ controller.abort();
 
 This is a monorepo with multiple packages:
 
-| Package | Description |
-|---------|-------------|
-| `@unipay/core` | Core SDK with unified API and types |
-| `@unipay/utils` | Shared utilities (retry, idempotency, etc.) |
-| `@unipay/adapter-stripe` | Stripe adapter |
-| `@unipay/adapter-razorpay` | Razorpay adapter |
-| `@unipay/adapter-paypal` | PayPal adapter |
-| `@unipay/client` | Browser-safe client helpers |
+| Package                    | Description                                 |
+| -------------------------- | ------------------------------------------- |
+| `@unipay/core`             | Core SDK with unified API and types         |
+| `@unipay/utils`            | Shared utilities (retry, idempotency, etc.) |
+| `@unipay/adapter-stripe`   | Stripe adapter                              |
+| `@unipay/adapter-razorpay` | Razorpay adapter                            |
+| `@unipay/adapter-paypal`   | PayPal adapter                              |
+| `@unipay/client`           | Browser-safe client helpers                 |
 
 ## Provider-Specific Details
 

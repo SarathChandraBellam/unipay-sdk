@@ -17,15 +17,10 @@ export function verifyRazorpaySignature(
   signature: string
 ): boolean {
   try {
-    const expectedSignature = createHmac('sha256', webhookSecret)
-      .update(rawBody)
-      .digest('hex');
+    const expectedSignature = createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
 
     // Use timing-safe comparison to prevent timing attacks
-    return timingSafeEqual(
-      Buffer.from(expectedSignature),
-      Buffer.from(signature)
-    );
+    return timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
   } catch (error) {
     return false;
   }
@@ -48,13 +43,16 @@ export function verifyStripeSignature(
 ): { valid: boolean; timestamp?: number } {
   try {
     // Parse signature header: t=timestamp,v1=signature
-    const signatures = signatureHeader.split(',').reduce((acc, pair) => {
-      const [key, value] = pair.split('=');
-      if (key && value) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string>);
+    const signatures = signatureHeader.split(',').reduce(
+      (acc, pair) => {
+        const [key, value] = pair.split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     const timestamp = parseInt(signatures.t || '0', 10);
     const signature = signatures.v1;
@@ -76,10 +74,7 @@ export function verifyStripeSignature(
       .digest('hex');
 
     // Timing-safe comparison
-    const valid = timingSafeEqual(
-      Buffer.from(expectedSignature),
-      Buffer.from(signature)
-    );
+    const valid = timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
 
     return { valid, timestamp };
   } catch (error) {

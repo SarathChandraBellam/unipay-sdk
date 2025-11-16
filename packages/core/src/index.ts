@@ -30,12 +30,7 @@ export {
 } from './errors.js';
 
 // Registry
-export {
-  registerAdapter,
-  getAdapter,
-  hasAdapter,
-  listAdapters,
-} from './registry.js';
+export { registerAdapter, getAdapter, hasAdapter, listAdapters } from './registry.js';
 
 // Client
 export { PaymentClient } from './client.js';
