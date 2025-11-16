@@ -19,7 +19,9 @@ export interface RetryOptions {
   onRetry?: (error: Error, attempt: number) => void;
 }
 
-const DEFAULT_OPTIONS: Required<Omit<RetryOptions, 'signal' | 'isRetryable' | 'onRetry' | 'timeoutMs'>> = {
+const DEFAULT_OPTIONS: Required<
+  Omit<RetryOptions, 'signal' | 'isRetryable' | 'onRetry' | 'timeoutMs'>
+> = {
   maxRetries: 3,
   baseDelayMs: 100,
   maxDelayMs: 10000,
@@ -58,10 +60,14 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     const timeout = setTimeout(resolve, ms);
 
     if (signal) {
-      signal.addEventListener('abort', () => {
-        clearTimeout(timeout);
-        reject(new Error('Aborted'));
-      }, { once: true });
+      signal.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timeout);
+          reject(new Error('Aborted'));
+        },
+        { once: true }
+      );
     }
   });
 }
@@ -73,10 +79,7 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
  * @returns Promise resolving to function result
  * @throws Last error if all retries exhausted
  */
-export async function retry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
+export async function retry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const { maxRetries, baseDelayMs, maxDelayMs, timeoutMs, signal, isRetryable, onRetry } = opts;
 

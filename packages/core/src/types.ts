@@ -135,7 +135,10 @@ export interface PaymentProvider {
    * @param rawBody - Raw request body as string
    * @returns Promise resolving to verification result
    */
-  verifyWebhook?(headers: Record<string, string>, rawBody: string): Promise<WebhookVerificationResult>;
+  verifyWebhook?(
+    headers: Record<string, string>,
+    rawBody: string
+  ): Promise<WebhookVerificationResult>;
 }
 
 /**

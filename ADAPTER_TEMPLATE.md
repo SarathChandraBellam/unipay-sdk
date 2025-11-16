@@ -241,10 +241,7 @@ describe('<Provider> Adapter', () => {
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"],
-  "references": [
-    { "path": "../core" },
-    { "path": "../utils" }
-  ]
+  "references": [{ "path": "../core" }, { "path": "../utils" }]
 }
 ```
 

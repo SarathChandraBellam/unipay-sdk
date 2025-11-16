@@ -21,8 +21,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts src/register.ts --format esm,cjs --dts --clean",
-    "dev": "tsup src/index.ts src/register.ts --format esm,cjs --dts --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "type-check": "tsc --noEmit"
   },
   "keywords": [

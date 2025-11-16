@@ -75,7 +75,9 @@ export function initializeRazorpayPayment(
   }
 
   if (!(window as any).Razorpay) {
-    throw new Error('Razorpay script not loaded. Include https://checkout.razorpay.com/v1/checkout.js');
+    throw new Error(
+      'Razorpay script not loaded. Include https://checkout.razorpay.com/v1/checkout.js'
+    );
   }
 
   const rzp = new (window as any).Razorpay({
@@ -123,11 +125,7 @@ export function redirectToPayPal(options: PayPalHelper) {
 /**
  * Generic payment initializer that routes to provider-specific helper
  */
-export function initializePayment(
-  provider: string,
-  clientPayload: any,
-  config?: any
-) {
+export function initializePayment(provider: string, clientPayload: any, config?: any) {
   switch (provider.toLowerCase()) {
     case 'stripe':
       return initializeStripePayment({

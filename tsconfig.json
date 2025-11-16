@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "allowJs": false,
@@ -10,9 +10,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "composite": false,
     "removeComments": true,
     "isolatedModules": true,
     "esModuleInterop": true,
@@ -30,7 +27,15 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@unipay/core": ["./packages/core/src"],
+      "@unipay/utils": ["./packages/utils/src"],
+      "@unipay/client": ["./packages/client/src"],
+      "@unipay/adapter-stripe": ["./packages/adapter-stripe/src"],
+      "@unipay/adapter-razorpay": ["./packages/adapter-razorpay/src"],
+      "@unipay/adapter-paypal": ["./packages/adapter-paypal/src"]
+    }
   },
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "**/tests/**"]
 }

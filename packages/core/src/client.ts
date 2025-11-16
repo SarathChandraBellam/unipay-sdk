@@ -125,10 +125,7 @@ export class PaymentClient {
     options?: PaymentOperationOptions
   ): Promise<Payment> {
     const provider = this.getProvider(options?.provider);
-    return this.withTimeout(
-      () => provider.createPayment(input),
-      options
-    );
+    return this.withTimeout(() => provider.createPayment(input), options);
   }
 
   /**
@@ -144,10 +141,7 @@ export class PaymentClient {
     options?: PaymentOperationOptions
   ): Promise<Payment> {
     const provider = this.getProvider(options?.provider);
-    return this.withTimeout(
-      () => provider.confirmPayment(paymentId, clientData),
-      options
-    );
+    return this.withTimeout(() => provider.confirmPayment(paymentId, clientData), options);
   }
 
   /**
@@ -163,10 +157,7 @@ export class PaymentClient {
     options?: PaymentOperationOptions
   ): Promise<Payment> {
     const provider = this.getProvider(options?.provider);
-    return this.withTimeout(
-      () => provider.capturePayment(paymentId, amount),
-      options
-    );
+    return this.withTimeout(() => provider.capturePayment(paymentId, amount), options);
   }
 
   /**
@@ -182,10 +173,7 @@ export class PaymentClient {
     options?: PaymentOperationOptions
   ): Promise<RefundResult> {
     const provider = this.getProvider(options?.provider);
-    return this.withTimeout(
-      () => provider.refundPayment(paymentId, amount),
-      options
-    );
+    return this.withTimeout(() => provider.refundPayment(paymentId, amount), options);
   }
 
   /**
@@ -194,15 +182,9 @@ export class PaymentClient {
    * @param options - Operation options
    * @returns Promise resolving to payment details
    */
-  async getPayment(
-    paymentId: string,
-    options?: PaymentOperationOptions
-  ): Promise<Payment> {
+  async getPayment(paymentId: string, options?: PaymentOperationOptions): Promise<Payment> {
     const provider = this.getProvider(options?.provider);
-    return this.withTimeout(
-      () => provider.getPayment(paymentId),
-      options
-    );
+    return this.withTimeout(() => provider.getPayment(paymentId), options);
   }
 
   /**
@@ -223,9 +205,6 @@ export class PaymentClient {
       throw new Error('Webhook verification not supported by this provider');
     }
 
-    return this.withTimeout(
-      () => provider.verifyWebhook!(headers, rawBody),
-      options
-    );
+    return this.withTimeout(() => provider.verifyWebhook!(headers, rawBody), options);
   }
 }

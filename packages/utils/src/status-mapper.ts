@@ -37,10 +37,7 @@ export function mapStripeStatus(status: string | unknown): PaymentStatus {
  * @param captured - Whether payment is captured (for payments)
  * @returns Normalized payment status
  */
-export function mapRazorpayStatus(
-  status: string | unknown,
-  captured?: boolean
-): PaymentStatus {
+export function mapRazorpayStatus(status: string | unknown, captured?: boolean): PaymentStatus {
   if (typeof status !== 'string') {
     return 'failed';
   }

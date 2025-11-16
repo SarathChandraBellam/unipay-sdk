@@ -173,9 +173,9 @@ export class StripeAdapter implements PaymentProvider {
 
       return {
         refundId: refund.id,
-        status: refund.status,
+        status: refund.status || 'unknown',
         amount: refund.amount,
-        currency: refund.currency,
+        currency: refund.currency || undefined,
       };
     } catch (error) {
       throw new PaymentOperationError(
@@ -223,11 +223,7 @@ export class StripeAdapter implements PaymentProvider {
         return { valid: false };
       }
 
-      const event = this.stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        this.webhookSecret
-      );
+      const event = this.stripe.webhooks.constructEvent(rawBody, signature, this.webhookSecret);
 
       return {
         valid: true,

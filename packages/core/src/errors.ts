@@ -60,7 +60,10 @@ export class PaymentOperationError extends UniPayError {
  * Error thrown when validation fails
  */
 export class ValidationError extends UniPayError {
-  constructor(message: string, public readonly field?: string) {
+  constructor(
+    message: string,
+    public readonly field?: string
+  ) {
     super(message, 'VALIDATION_ERROR');
     this.name = 'ValidationError';
     Object.setPrototypeOf(this, ValidationError.prototype);
@@ -71,7 +74,10 @@ export class ValidationError extends UniPayError {
  * Error thrown when an operation times out
  */
 export class TimeoutError extends UniPayError {
-  constructor(message: string, public readonly timeoutMs: number) {
+  constructor(
+    message: string,
+    public readonly timeoutMs: number
+  ) {
     super(message, 'TIMEOUT');
     this.name = 'TimeoutError';
     Object.setPrototypeOf(this, TimeoutError.prototype);
