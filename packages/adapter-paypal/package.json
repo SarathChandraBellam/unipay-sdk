@@ -35,7 +35,7 @@
   "dependencies": {
     "@unipay/core": "^1.0.0",
     "@unipay/utils": "^1.0.0",
-    "undici": "^6.2.1"
+    "undici": "^6.29.1"
   },
   "devDependencies": {
     "@types/node": "^18.19.3",
